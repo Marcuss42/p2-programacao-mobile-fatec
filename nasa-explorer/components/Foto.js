@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   img: {
     width: "100%",
-    height: 120,   // <<< controla o TAMANHO VISUAL
+    height: 120
   },
   titulo: {
     marginTop: 4,
