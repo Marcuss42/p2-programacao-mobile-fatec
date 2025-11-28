@@ -77,7 +77,7 @@ export default class App extends Component {
         <Text style={styles.titulo}>NASA EXPLORER</Text>
 
         <View style={styles.box}>
-          <Text style={styles.subtitulo}>1. Foto do Dia + Galeria</Text>
+          <Text style={styles.subtitulo}>Foto do Dia</Text>
 
           <FlatList 
             scrollEnabled={false}
@@ -96,7 +96,7 @@ export default class App extends Component {
         </View>
 
         <View style={styles.box}>
-          <Text style={styles.subtitulo}>2. Buscar Imagens</Text>
+          <Text style={styles.subtitulo}>Buscar Imagens</Text>
 
           <TextInput
             style={styles.input}
