@@ -8,13 +8,13 @@ app.use(cors())
 
 app.get('/today-img', async (req, res) => {
     const nasaClient = axios.create({
-    baseURL: 'https://api.nasa.gov/planetary/' 
+        baseURL: 'https://api.nasa.gov/planetary/' 
     })
 
     const result = await nasaClient.get('apod', {
-    params: {
-        api_key: process.env.NASA_KEY 
-    }
+        params: {
+            api_key: process.env.NASA_KEY 
+        }
     })
 
     res.json(result.data) 
@@ -25,7 +25,7 @@ app.get('/search', async (req, res) => {
     const anoBusca = req.query.ano   
 
     const nasaSearchClient = axios.create({
-    baseURL: 'https://images-api.nasa.gov' 
+        baseURL: 'https://images-api.nasa.gov' 
     })
 
     const result = await nasaSearchClient.get('/search', {
@@ -43,9 +43,9 @@ app.get('/search', async (req, res) => {
         const dados = item.data[0]
 
         return {
-            titulo: dados.title || 'Título não disponível',
+            titulo: dados.title,
             link: link, 
-            descricao: dados.description || 'Descrição não disponível'
+            descricao: dados.description
         }
     })
 

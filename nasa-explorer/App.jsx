@@ -14,21 +14,15 @@ import Foto from './components/Foto';
 import Footer from './components/Footer';
 
 export default class App extends Component {
-  state = {
-    dailyPhoto: null,
-    fotosSalvas: [],
-    fotosAno: [],
-    termoBusca: ''
-  };
-
-  anoAtual = new Date().getFullYear();
-  limiteAnos = 4;
+  state = {};
   anos = [];
 
   constructor(props) {
     super(props);
 
-    for (let ano = this.anoAtual; ano >= this.anoAtual - this.limiteAnos; ano--) {
+    const anoAtual = new Date().getFullYear();
+    const limiteAnos = 4;
+    for (let ano = anoAtual; ano >= anoAtual - limiteAnos; ano--) {
       this.anos.push(ano);
     }
 
@@ -66,7 +60,7 @@ export default class App extends Component {
     const result = await nasaClient.get('/search', {
         params: { termo: termoBusca, ano }
       });
-    this.setState({ fotosAno: result.data.slice(0, 10) });
+    this.setState({ fotosAno: result.data });
   };
 
   render() {
@@ -133,10 +127,10 @@ export default class App extends Component {
             keyExtractor={(item, index) => `${item.titulo}-${index}`}
             numColumns={2}
             columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 8 }}
-            renderItem={({ item }) => (
+            renderItem={(obj) => (
               <Foto
-                titulo={item.titulo}
-                url={item.link}
+                titulo={obj.item.titulo}
+                url={obj.item.link}
                 size={5}
               />
             )}
