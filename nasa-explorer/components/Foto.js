@@ -21,7 +21,6 @@ export default class Foto extends Component {
         <Text style={styles.titulo}>
           {this.props.titulo || ""}
         </Text>
-
       </View>
     );
   }

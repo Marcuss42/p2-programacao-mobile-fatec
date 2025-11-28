@@ -1,154 +1,152 @@
+import React, { Component } from 'react';
 import { 
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  FlatList,
-  ScrollView
+  View, 
+  Text, 
+  TextInput, 
+  Pressable, 
+  StyleSheet, 
+  FlatList, 
+  ScrollView 
 } from 'react-native';
-
-import { useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import nasaClient from './utils/nasaClient';
 import Foto from './components/Foto';
+import Footer from './components/Footer';
 
-export default function App() {
+export default class App extends Component {
+  state = {
+    dailyPhoto: null,
+    fotosSalvas: [],
+    fotosAno: [],
+    termoBusca: ''
+  };
 
-  const [dailyPhoto, setDailyPhoto] = useState(null);
-  const [fotosSalvas, setFotosSalvas] = useState([]);
-  const [fotosAno, setFotosAno] = useState([]);
-  const [termoBusca, setTermoBusca] = useState('');
+  anoAtual = new Date().getFullYear();
+  limiteAnos = 4;
+  anos = [];
 
-  const anoAtual = new Date().getFullYear();
-  const limiteAnos = 4;
-  const anoMinimo = anoAtual - limiteAnos;
-  const anos = [];
+  constructor(props) {
+    super(props);
 
-  for (let ano = anoAtual; ano >= anoMinimo; ano--) {
-    anos.push(ano);
+    for (let ano = this.anoAtual; ano >= this.anoAtual - this.limiteAnos; ano--) {
+      this.anos.push(ano);
+    }
+
+    this.state = {
+      dailyPhoto: null,
+      fotosSalvas: [],
+      fotosAno: [],
+      termoBusca: ''
+    };
   }
 
-  const inputBusca = useRef(null);
+  componentDidMount() {
+    this.carregarFotoDoDia();
+    this.carregarFotosSalvas();
+  }
 
-  const buscarPorAno = async (ano) => {
-    if (!termoBusca) {
-      alert("Digite um termo antes de buscar");
-      return;
-    }
-
-    try {
-      const result = await nasaClient.get('/search', {
-        params: { termo: termoBusca, ano }
-      });
-      setFotosAno(result.data); 
-    } catch (err) {
-      console.log(err);
-      alert("Erro ao buscar imagens");
-    }
-  };
-
-  const carregarFotoDoDia = async () => {
+  carregarFotoDoDia = async () => {
     const result = await nasaClient.get('/today-img');
     const foto = result.data;
-
-    setDailyPhoto(foto); 
-
-    const chave = foto.date;
-    await AsyncStorage.setItem(chave, JSON.stringify(foto));
-
+    this.setState({ dailyPhoto: foto });
+    await AsyncStorage.setItem(foto.date, JSON.stringify(foto));
+    
   };
 
-  const carregarFotosSalvas = async () => {
+  carregarFotosSalvas = async () => {
     const keys = await AsyncStorage.getAllKeys();
-    const apodKeys = keys;
-
-    const dados = await AsyncStorage.multiGet(apodKeys);
+    const dados = await AsyncStorage.multiGet(keys);
     const fotos = dados.map(([k, v]) => JSON.parse(v));
-
-    setFotosSalvas(fotos);
+    this.setState({ fotosSalvas: fotos });
   };
 
-  
-  useEffect(() => {
-    carregarFotoDoDia();
-    carregarFotosSalvas();
-  }, []);
+  buscarPorAno = async (ano) => {
+    const { termoBusca } = this.state;
 
-  const galeria = dailyPhoto
-    ? [dailyPhoto, ...fotosSalvas.filter(f => f.date !== dailyPhoto.date)]
-    : fotosSalvas;
-  return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={{ alignItems: 'center', paddingVertical: 20 }}>
+    const result = await nasaClient.get('/search', {
+        params: { termo: termoBusca, ano }
+      });
+    this.setState({ fotosAno: result.data.slice(0, 10) });
+  };
 
-      <Text style={styles.titulo}>NASA EXPLORER</Text>
+  render() {
+    const { dailyPhoto, fotosSalvas, fotosAno, termoBusca } = this.state;
+    const galeria = dailyPhoto
+      ? [dailyPhoto, ...fotosSalvas.filter(f => f.date !== dailyPhoto.date)]
+      : fotosSalvas;
 
-      <View style={styles.box}>
-        <Text style={styles.subtitulo}>1. Foto do Dia + Galeria</Text>
+    return (
+      <ScrollView 
+        style={styles.container}
+        contentContainerStyle={{ alignItems: 'center', paddingVertical: 20 }}
+      >
+        <Text style={styles.titulo}>NASA EXPLORER</Text>
 
-        <FlatList 
-          scrollEnabled={false}
-          data={galeria}
-          keyExtractor={(item) => item.date}
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
-          renderItem={({ item }) => (
-            <Foto 
-              titulo={item.date}
-              url={item.url}
-              size={5} 
-            />
-          )}
-        />
-      </View>
+        <View style={styles.box}>
+          <Text style={styles.subtitulo}>1. Foto do Dia + Galeria</Text>
 
-      <View style={styles.box}>
-        <Text style={styles.subtitulo}>2. Buscar Imagens</Text>
-
-        <TextInput
-          ref={inputBusca}
-          style={styles.input}
-          placeholder="Digite um termo..."
-          value={termoBusca}
-          onChangeText={setTermoBusca}
-        />
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 8 }}>
-          {anos.map((ano, index) => (
-            <Pressable
-              key={ano}
-              style={[
-                styles.botaoAno,
-                index === 0 ? styles.botaoAnoPrimeiro : styles.botaoAnoOutros
-              ]}
-              onPress={() => buscarPorAno(ano)}
-            >
-              <Text style={styles.buttonText}>{ano}</Text>
-            </Pressable>
-          ))}
+          <FlatList 
+            scrollEnabled={false}
+            data={galeria}
+            keyExtractor={(item) => item.date}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between' }}
+            renderItem={({ item }) => (
+              <Foto 
+                titulo={item.date}
+                url={item.url}
+                size={5} 
+              />
+            )}
+          />
         </View>
 
-        <FlatList
-          scrollEnabled={false}
-          style={{ marginTop: 12 }}
-          data={fotosAno}
-          keyExtractor={(item, index) => `${item.titulo}-${index}`}
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 8 }}
-          renderItem={({ item }) => (
-            <Foto
-              titulo={item.titulo}
-              url={item.link}
-              size={5}
-            />
-          )}
-        />
-      </View>
+        <View style={styles.box}>
+          <Text style={styles.subtitulo}>2. Buscar Imagens</Text>
 
-    </ScrollView>
-  );
+          <TextInput
+            style={styles.input}
+            placeholder="Digite um termo..."
+            value={termoBusca}
+            onChangeText={(text) => this.setState({ termoBusca: text })}
+          />
+
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 8 }}>
+            {this.anos.map((ano, index) => (
+              <Pressable
+                key={ano}
+                style={[
+                  styles.botaoAno,
+                  index === 0 ? styles.botaoAnoPrimeiro : styles.botaoAnoOutros
+                ]}
+                onPress={() => this.buscarPorAno(ano)}
+              >
+                <Text style={styles.buttonText}>{ano}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <FlatList
+            scrollEnabled={false}
+            style={{ marginTop: 12 }}
+            data={fotosAno}
+            keyExtractor={(item, index) => `${item.titulo}-${index}`}
+            numColumns={2}
+            columnWrapperStyle={{ justifyContent: 'space-between', marginBottom: 8 }}
+            renderItem={({ item }) => (
+              <Foto
+                titulo={item.titulo}
+                url={item.link}
+                size={5}
+              />
+            )}
+          />
+
+          <Footer />
+        </View>
+      </ScrollView>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -185,14 +183,6 @@ const styles = StyleSheet.create({
     borderColor: '#aaaaaaff',
     padding: 10,
     borderRadius: 6
-  },
-
-  button: {
-    marginTop: 10,
-    backgroundColor: '#0096F3',
-    padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
   },
 
   buttonText: {
