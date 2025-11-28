@@ -6,21 +6,52 @@ const cors = require('cors')
 
 app.use(cors())
 
-app.get('/img', async (req, res) => {
-  
-  const nasaClient = axios.create({
+app.get('/today-img', async (req, res) => {
+    const nasaClient = axios.create({
     baseURL: 'https://api.nasa.gov/planetary/' 
-  })
+    })
 
-  const result = await nasaClient.get('apod', {
+    const result = await nasaClient.get('apod', {
     params: {
-      api_key: process.env.NASA_KEY 
+        api_key: process.env.NASA_KEY 
     }
-  })
+    })
 
-  res.json(result.data) 
+    res.json(result.data) 
 })
 
+app.get('/search', async (req, res) => {
+    const termoBusca = req.query.termo
+    const anoBusca = req.query.ano   
+
+    const nasaSearchClient = axios.create({
+    baseURL: 'https://images-api.nasa.gov' 
+    })
+
+    const result = await nasaSearchClient.get('/search', {
+        params: {
+            q: termoBusca,
+            year_start: anoBusca,
+            media_type: 'image',
+            page_size: 10
+        }
+    })
+
+    const fotosProcessadas = result.data.collection.items.map(item => {
+        const link = item.links[0].href
+
+        const dados = item.data[0]
+
+        return {
+            titulo: dados.title || 'Título não disponível',
+            link: link, 
+            descricao: dados.description || 'Descrição não disponível'
+        }
+    })
+
+    res.json(fotosProcessadas)
+  
+})
 
 const port = 3000
 app.listen(port, () => console.log(`Backend NASA rodando na porta ${port}.`))
